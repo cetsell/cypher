@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f4efe6">
+  <meta name="description" content="Cypher is a daily quote cipher. One substitution puzzle for each local day.">
+  <title>Cypher</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23146b54'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='Georgia,serif' font-size='18' fill='%23f4efe6'%3EC%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4efe6;
+      --ink: #1b1916;
+      --muted: #6a645b;
+      --cipher: #3d4651;
+      --line: #d9d1c3;
+      --pine: #146b54;
+      --pine-deep: #0d4a3b;
+      --butter: #ffd56a;
+      --card: #fffdf9;
+      --dock: #ebe3d4;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Noto Serif Display", "Liberation Serif", Georgia, "Times New Roman", serif;
+      --sans: Inter, "Source Sans 3", "Segoe UI", "Helvetica Neue", "Noto Sans", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--paper); }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(1100px 420px at 50% -12%, #fffaf1 0%, rgba(255, 250, 241, 0) 58%),
+        var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.4;
+    }
+
+    .app {
+      max-width: 40rem;
+      margin: 0 auto;
+      padding: 1.15rem 0.9rem 17.5rem;
+    }
+
+    body.is-solved .app { padding-bottom: 3rem; }
+
+    .masthead {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 1rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 3px solid var(--ink);
+      position: relative;
+    }
+
+    .masthead::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -7px;
+      height: 1px;
+      background: var(--ink);
+    }
+
+    .kicker {
+      margin: 0 0 0.25rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--pine);
+    }
+
+    .title {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: clamp(3rem, 14vw, 4.6rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 0.85;
+    }
+
+    .score { text-align: right; }
+
+    .score-num {
+      margin: 0;
+      font-family: var(--serif);
+      font-size: 2.5rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 0.85;
+    }
+
+    .score-label {
+      margin: 0.2rem 0 0;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .today {
+      margin: 0.4rem 0 0;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+
+    main { padding-top: 1.6rem; }
+
+    .byline {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 0.45rem 0.55rem;
+      margin: 0 0 1.2rem;
+    }
+
+    .by-label {
+      align-self: center;
+      font-family: var(--sans);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .by-name {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 0.4rem 0.45rem;
+      max-width: 100%;
+    }
+
+    .board {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 0.72rem 0.8rem;
+    }
+
+    .word {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+      max-width: 100%;
+      gap: 0.12rem;
+    }
+
+    .cell, .key {
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cell {
+      appearance: none;
+      width: 1.72rem;
+      height: 2.2rem;
+      padding: 0;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 1.12rem;
+      line-height: 1;
+      scroll-margin-top: 0.75rem;
+      scroll-margin-bottom: 16rem;
+    }
+
+    .cell.is-cipher {
+      font-family: var(--sans);
+      font-weight: 700;
+      color: var(--cipher);
+      box-shadow: inset 0 -2px 0 #c8c0b2;
+    }
+
+    .cell.is-guess {
+      font-family: var(--serif);
+      font-weight: 700;
+      color: var(--ink);
+      background: #dff3eb;
+      box-shadow: inset 0 0 0 1px #b7ddd0, inset 0 -3px 0 var(--pine);
+    }
+
+    .cell.is-cipher.is-selected,
+    .cell.is-guess.is-selected {
+      background: var(--butter);
+      color: var(--ink);
+      box-shadow: 0 0 0 2px var(--pine-deep);
+      z-index: 1;
+    }
+
+    .mark {
+      align-self: flex-end;
+      min-width: 0.4rem;
+      padding: 0 0.05rem 0.35rem;
+      font-family: var(--serif);
+      font-size: 1.2rem;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .victory { display: none; text-align: center; padding: 0.4rem 0 1rem; }
+
+    body.is-solved .victory { display: block; }
+    body.is-solved .play,
+    body.is-solved .dock { display: none; }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--pine);
+    }
+
+    blockquote {
+      margin: 0.85rem auto 0.45rem;
+      max-width: 22em;
+      font-family: var(--serif);
+      font-size: clamp(1.45rem, 4.4vw, 2.05rem);
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    blockquote::before { content: "\201C"; }
+    blockquote::after { content: "\201D"; }
+
+    .victory-by {
+      margin: 0;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 1.15rem;
+    }
+
+    .victory-by::before { content: "\2014\00a0"; }
+
+    .victory-score {
+      margin: 0.9rem 0 0.3rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .tomorrow {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 5;
+      background: var(--dock);
+      border-top: 1px solid #ddd4c4;
+      box-shadow: 0 -10px 28px rgba(28, 25, 21, 0.05);
+      padding: 0.55rem 0.65rem calc(0.7rem + env(safe-area-inset-bottom));
+    }
+
+    .hint {
+      min-height: 1.2em;
+      margin: 0 0 0.45rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .hint.is-alert { color: var(--pine-deep); font-weight: 700; }
+
+    .keyboard {
+      max-width: 34rem;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      gap: 0.32rem;
+    }
+
+    .row:nth-child(2) { padding: 0 0.85rem; }
+    .row:nth-child(3) { padding: 0 0.15rem; }
+
+    .key {
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: 3.25rem;
+      height: 3rem;
+      border: 1px solid #e3daca;
+      border-bottom-width: 2px;
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .key-clear {
+      flex-grow: 1.5;
+      max-width: 5.4rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+    }
+
+    .key.is-used {
+      background: #e4f3ed;
+      border-color: #b7ddd0;
+      color: var(--pine-deep);
+    }
+
+    .key.is-current { box-shadow: inset 0 0 0 2px var(--pine-deep); }
+
+    .key:active { transform: translateY(1px); border-bottom-width: 1px; }
+
+    .cell:focus-visible,
+    .key:focus-visible {
+      outline: 2px solid var(--pine);
+      outline-offset: 2px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    noscript {
+      display: block;
+      max-width: 40rem;
+      margin: 1rem auto;
+      padding: 0 1rem;
+    }
+
+    @media (hover: hover) {
+      .cell:hover { background: rgba(255, 213, 106, 0.55); }
+      .key:hover { background: #fff; }
+      .key.is-used:hover { background: #d7eee6; }
+    }
+
+    @media (min-width: 800px) {
+      .app { padding: 2.75rem 1.5rem 18rem; }
+      body.is-solved .app { padding-bottom: 4rem; }
+      .cell {
+        width: 2.15rem;
+        height: 2.65rem;
+        font-size: 1.35rem;
+      }
+      .mark { font-size: 1.4rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cell, .key { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="masthead">
+      <div>
+        <p class="kicker">Daily cipher</p>
+        <h1 class="title">Cypher</h1>
+      </div>
+      <div class="score" aria-live="polite" aria-atomic="true">
+        <p class="score-num" id="attempt-num">0</p>
+        <p class="score-label" id="attempt-label">attempts</p>
+        <p class="today" id="today"></p>
+      </div>
+    </header>
+    <main>
+      <section class="play" id="play">
+        <div class="byline" id="byline" translate="no" aria-label="Attribution"></div>
+        <h2 class="sr-only">Today's quote</h2>
+        <div class="board" id="board" role="group" aria-label="Cipher puzzle" translate="no"></div>
+      </section>
+      <section class="victory" id="victory">
+        <p class="eyebrow">Solved</p>
+        <blockquote id="victory-quote"></blockquote>
+        <p class="victory-by" id="victory-by"></p>
+        <p class="victory-score" id="victory-score"></p>
+        <p class="tomorrow">A new puzzle arrives at local midnight.</p>
+      </section>
+    </main>
+  </div>
+  <div class="dock" id="dock">
+    <p class="hint" id="hint" aria-live="polite">Select a letter, then type its match.</p>
+    <div class="keyboard" id="keyboard" role="group" aria-label="Letter keyboard"></div>
+  </div>
+  <noscript>Cypher needs JavaScript to build today's puzzle. Everything stays on this page.</noscript>
+  <script>
+    'use strict';
+
+    /* engine:start */
+    const QUOTES = [
+      { text: 'To be, or not to be, that is the question.', author: 'William Shakespeare' },
+      { text: "All the world's a stage.", author: 'William Shakespeare' },
+      { text: 'Brevity is the soul of wit.', author: 'William Shakespeare' },
+      { text: 'The course of true love never did run smooth.', author: 'William Shakespeare' },
+      { text: 'We are such stuff as dreams are made on.', author: 'William Shakespeare' },
+      { text: 'Parting is such sweet sorrow.', author: 'William Shakespeare' },
+      { text: 'If music be the food of love, play on.', author: 'William Shakespeare' },
+      { text: 'All that glisters is not gold.', author: 'William Shakespeare' },
+      { text: 'To thine own self be true.', author: 'William Shakespeare' },
+      { text: 'Lord, what fools these mortals be!', author: 'William Shakespeare' },
+      { text: 'A horse! A horse! My kingdom for a horse!', author: 'William Shakespeare' },
+      { text: 'Something is rotten in the state of Denmark.', author: 'William Shakespeare' },
+      { text: 'Cowards die many times before their deaths.', author: 'William Shakespeare' },
+      { text: 'The better part of valour is discretion.', author: 'William Shakespeare' },
+      { text: 'Uneasy lies the head that wears a crown.', author: 'William Shakespeare' },
+      { text: 'The lady doth protest too much, methinks.', author: 'William Shakespeare' },
+      { text: "What's done cannot be undone.", author: 'William Shakespeare' },
+      { text: 'We know what we are, but know not what we may be.', author: 'William Shakespeare' },
+      { text: 'The fault, dear Brutus, is not in our stars.', author: 'William Shakespeare' },
+      { text: 'Though this be madness, yet there is method in it.', author: 'William Shakespeare' },
+      { text: 'Love looks not with the eyes, but with the mind.', author: 'William Shakespeare' },
+      { text: 'Sweet are the uses of adversity.', author: 'William Shakespeare' },
+      { text: 'Out, out, brief candle!', author: 'William Shakespeare' },
+      { text: 'What a piece of work is man!', author: 'William Shakespeare' },
+      { text: 'Beware the ides of March.', author: 'William Shakespeare' },
+      { text: 'Friends, Romans, countrymen, lend me your ears.', author: 'William Shakespeare' },
+      { text: 'Cry havoc and let slip the dogs of war.', author: 'William Shakespeare' },
+      { text: 'The quality of mercy is not strained.', author: 'William Shakespeare' },
+      { text: 'Now is the winter of our discontent.', author: 'William Shakespeare' },
+      { text: 'Fair is foul, and foul is fair.', author: 'William Shakespeare' },
+      { text: 'Double, double toil and trouble.', author: 'William Shakespeare' },
+      { text: 'Et tu, Brute?', author: 'William Shakespeare' },
+      { text: "All's well that ends well.", author: 'William Shakespeare' },
+      { text: 'There is no charm equal to tenderness of heart.', author: 'Jane Austen' },
+      { text: 'Think only of the past as its remembrance gives you pleasure.', author: 'Jane Austen' },
+      { text: 'I declare after all there is no enjoyment like reading!', author: 'Jane Austen' },
+      { text: 'Angry people are not always wise.', author: 'Jane Austen' },
+      { text: 'I think, therefore I am.', author: 'René Descartes' },
+      { text: 'The unexamined life is not worth living.', author: 'Socrates' },
+      { text: 'I know that I know nothing.', author: 'Socrates' },
+      { text: 'We are all in the gutter, but some of us are looking at the stars.', author: 'Oscar Wilde' },
+      { text: 'I can resist everything except temptation.', author: 'Oscar Wilde' },
+      { text: 'The truth is rarely pure and never simple.', author: 'Oscar Wilde' },
+      { text: 'Experience is simply the name we give our mistakes.', author: 'Oscar Wilde' },
+      { text: 'To love oneself is the beginning of a lifelong romance.', author: 'Oscar Wilde' },
+      { text: 'I have nothing to declare except my genius.', author: 'Oscar Wilde' },
+      { text: 'Hope is the thing with feathers.', author: 'Emily Dickinson' },
+      { text: 'Forever is composed of nows.', author: 'Emily Dickinson' },
+      { text: 'I dwell in possibility.', author: 'Emily Dickinson' },
+      { text: 'All that we see or seem is but a dream within a dream.', author: 'Edgar Allan Poe' },
+      { text: 'Quoth the Raven, Nevermore.', author: 'Edgar Allan Poe' },
+      { text: 'I am large, I contain multitudes.', author: 'Walt Whitman' },
+      { text: 'I celebrate myself, and sing myself.', author: 'Walt Whitman' },
+      { text: 'The mass of men lead lives of quiet desperation.', author: 'Henry David Thoreau' },
+      { text: 'Things do not change; we change.', author: 'Henry David Thoreau' },
+      { text: 'Heaven is under our feet as well as over our heads.', author: 'Henry David Thoreau' },
+      { text: 'Nothing great was ever achieved without enthusiasm.', author: 'Ralph Waldo Emerson' },
+      { text: 'The only way to have a friend is to be one.', author: 'Ralph Waldo Emerson' },
+      { text: 'Hitch your wagon to a star.', author: 'Ralph Waldo Emerson' },
+      { text: 'Lost time is never found again.', author: 'Benjamin Franklin' },
+      { text: 'Well done is better than well said.', author: 'Benjamin Franklin' },
+      { text: 'Early to bed and early to rise makes a man healthy, wealthy, and wise.', author: 'Benjamin Franklin' },
+      { text: 'Never leave that till tomorrow which you can do today.', author: 'Benjamin Franklin' },
+      { text: 'Little strokes fell great oaks.', author: 'Benjamin Franklin' },
+      { text: 'Beware; for I am fearless, and therefore powerful.', author: 'Mary Shelley' },
+      { text: 'Curiouser and curiouser!', author: 'Lewis Carroll' },
+      { text: "We're all mad here.", author: 'Lewis Carroll' },
+      { text: 'Begin at the beginning and go on till you come to the end.', author: 'Lewis Carroll' },
+      { text: 'Give me liberty, or give me death!', author: 'Patrick Henry' },
+      { text: "These are the times that try men's souls.", author: 'Thomas Paine' },
+      { text: 'Government of the people, by the people, for the people.', author: 'Abraham Lincoln' },
+      { text: 'With malice toward none, with charity for all.', author: 'Abraham Lincoln' },
+      { text: 'A house divided against itself cannot stand.', author: 'Abraham Lincoln' },
+      { text: "If you tell the truth, you don't have to remember anything.", author: 'Mark Twain' },
+      { text: 'The report of my death was an exaggeration.', author: 'Mark Twain' },
+      { text: 'Courage is resistance to fear, mastery of fear, not absence of fear.', author: 'Mark Twain' },
+      { text: 'If there is no struggle, there is no progress.', author: 'Frederick Douglass' },
+      { text: 'Failure is impossible.', author: 'Susan B. Anthony' },
+      { text: 'Knowledge will forever govern ignorance.', author: 'James Madison' },
+      { text: 'I cannot live without books.', author: 'Thomas Jefferson' },
+      { text: 'Honesty is the first chapter in the book of wisdom.', author: 'Thomas Jefferson' },
+      { text: 'Imagination is more important than knowledge.', author: 'Albert Einstein' },
+      { text: 'If I have seen further it is by standing on the shoulders of giants.', author: 'Isaac Newton' },
+      { text: 'Knowledge is power.', author: 'Francis Bacon' },
+      { text: 'Solitary, poor, nasty, brutish, and short.', author: 'Thomas Hobbes' },
+      { text: 'Man is born free, and everywhere he is in chains.', author: 'Jean-Jacques Rousseau' },
+      { text: 'What does not kill me, makes me stronger.', author: 'Friedrich Nietzsche' },
+      { text: 'I came, I saw, I conquered.', author: 'Julius Caesar' },
+      { text: 'The die is cast.', author: 'Julius Caesar' },
+      { text: 'Love conquers all.', author: 'Virgil' },
+      { text: 'Fortune favors the bold.', author: 'Virgil' },
+      { text: 'A journey of a thousand miles begins with a single step.', author: 'Lao Tzu' },
+      { text: 'No man ever steps in the same river twice.', author: 'Heraclitus' },
+      { text: 'To see a world in a grain of sand.', author: 'William Blake' },
+      { text: 'A thing of beauty is a joy for ever.', author: 'John Keats' },
+      { text: 'Beauty is truth, truth beauty.', author: 'John Keats' },
+      { text: "'Tis better to have loved and lost than never to have loved at all.", author: 'Alfred Tennyson' },
+      { text: 'The child is father of the man.', author: 'William Wordsworth' },
+      { text: 'Water, water, every where, nor any drop to drink.', author: 'Samuel Taylor Coleridge' },
+      { text: 'All for one, and one for all.', author: 'Alexandre Dumas' }
+    ];
+
+    function hashString(str) {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i += 1) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return h >>> 0;
+    }
+
+    function mulberry32(seed) {
+      let a = seed >>> 0;
+      return function rng() {
+        a |= 0;
+        a = (a + 0x6d2b79f5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function localDateKey(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+
+    function assertCipher(encode) {
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const values = [];
+      for (let i = 0; i < alphabet.length; i += 1) {
+        const plain = alphabet[i];
+        const cipher = encode[plain];
+        if (cipher === plain) throw new Error('Cipher fixes ' + plain);
+        values.push(cipher);
+      }
+      if (new Set(values).size !== 26) throw new Error('Cipher is not a permutation');
+    }
+
+    function buildPuzzle(dateKey) {
+      const rng = mulberry32(hashString('cypher:' + dateKey));
+      const quote = QUOTES[Math.floor(rng() * QUOTES.length)];
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      const shuffled = alphabet.slice();
+      for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(rng() * (i + 1));
+        const tmp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = tmp;
+      }
+      for (let i = 0; i < shuffled.length; i += 1) {
+        if (shuffled[i] === alphabet[i]) {
+          const k = (i + 1) % shuffled.length;
+          const tmp = shuffled[i];
+          shuffled[i] = shuffled[k];
+          shuffled[k] = tmp;
+        }
+      }
+      const encode = {};
+      const decode = {};
+      for (let i = 0; i < alphabet.length; i += 1) {
+        encode[alphabet[i]] = shuffled[i];
+        decode[shuffled[i]] = alphabet[i];
+      }
+      assertCipher(encode);
+      return { dateKey: dateKey, text: quote.text, author: quote.author, encode: encode, decode: decode };
+    }
+    /* engine:end */
+
+    (function () {
+      const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+      const attemptNum = document.getElementById('attempt-num');
+      const attemptLabel = document.getElementById('attempt-label');
+      const todayEl = document.getElementById('today');
+      const byline = document.getElementById('byline');
+      const board = document.getElementById('board');
+      const victoryQuote = document.getElementById('victory-quote');
+      const victoryBy = document.getElementById('victory-by');
+      const victoryScore = document.getElementById('victory-score');
+      const hint = document.getElementById('hint');
+      const keyboard = document.getElementById('keyboard');
+
+      let puzzle = null;
+      let mappings = {};
+      let attempts = 0;
+      let selected = null;
+      let solved = false;
+      let hintOverride = '';
+      let hintTimer = 0;
+
+      function storageKey(dateKey) {
+        return 'cypher.v2.' + dateKey;
+      }
+
+      function plainLetter(ch) {
+        if (ch >= 'a' && ch <= 'z') return ch.toUpperCase();
+        if (ch >= 'A' && ch <= 'Z') return ch;
+        if (typeof ch.normalize === 'function') {
+          const base = ch.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          if (base.length === 1) {
+            const up = base.toUpperCase();
+            if (up >= 'A' && up <= 'Z') return up;
+          }
+        }
+        return '';
+      }
+
+      function forEachPlain(text, visit) {
+        for (let i = 0; i < text.length; i += 1) {
+          const plain = plainLetter(text[i]);
+          if (plain) visit(plain);
+        }
+      }
+
+      function attemptWord(count) {
+        return count === 1 ? 'attempt' : 'attempts';
+      }
+
+      function cipherLettersInPuzzle() {
+        const present = new Set();
+        function add(plain) { present.add(puzzle.encode[plain]); }
+        forEachPlain(puzzle.text, add);
+        forEachPlain(puzzle.author, add);
+        return present;
+      }
+
+      function isSolved() {
+        let ok = true;
+        function check(plain) {
+          if (mappings[puzzle.encode[plain]] !== plain) ok = false;
+        }
+        forEachPlain(puzzle.text, check);
+        forEachPlain(puzzle.author, check);
+        return ok;
+      }
+
+      function readProgress(dateKey) {
+        let raw = null;
+        try {
+          raw = localStorage.getItem(storageKey(dateKey));
+        } catch (err) {
+          return null;
+        }
+        if (!raw) return null;
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch (err) {
+          return null;
+        }
+        if (!data || typeof data !== 'object') return null;
+        const present = cipherLettersInPuzzle();
+        const next = {};
+        const used = new Set();
+        const source = data.mappings && typeof data.mappings === 'object' ? data.mappings : {};
+        const ciphers = Object.keys(source);
+        for (let i = 0; i < ciphers.length; i += 1) {
+          const cipher = ciphers[i];
+          const plain = source[cipher];
+          if (!present.has(cipher)) continue;
+          if (typeof plain !== 'string' || !/^[A-Z]$/.test(plain)) continue;
+          if (used.has(plain)) continue;
+          used.add(plain);
+          next[cipher] = plain;
+        }
+        let attemptCount = Object.keys(next).length;
+        if (Number.isInteger(data.attempts) && data.attempts >= 0 && data.attempts < 100000) {
+          attemptCount = data.attempts;
+        }
+        let nextSelected = null;
+        if (typeof data.selected === 'string' && present.has(data.selected)) {
+          nextSelected = data.selected;
+        }
+        return { mappings: next, attempts: attemptCount, selected: nextSelected };
+      }
+
+      function persist() {
+        try {
+          localStorage.setItem(storageKey(puzzle.dateKey), JSON.stringify({
+            mappings: mappings,
+            attempts: attempts,
+            selected: selected,
+            solved: solved
+          }));
+        } catch (err) {
+          // Storage can be blocked in private mode. The puzzle still plays.
+        }
+      }
+
+      function formatToday(dateKey) {
+        const parts = dateKey.split('-');
+        const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        return date.toLocaleDateString(undefined, {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+
+      function cipherForPlain(plain) {
+        const ciphers = Object.keys(mappings);
+        for (let i = 0; i < ciphers.length; i += 1) {
+          if (mappings[ciphers[i]] === plain) return ciphers[i];
+        }
+        return '';
+      }
+
+      function renderCipherText(container, text) {
+        container.replaceChildren();
+        let word = null;
+        function ensureWord() {
+          if (word) return word;
+          word = document.createElement('span');
+          word.className = 'word';
+          container.appendChild(word);
+          return word;
+        }
+        for (let i = 0; i < text.length; i += 1) {
+          const ch = text[i];
+          if (ch === ' ') {
+            word = null;
+            continue;
+          }
+          const parent = ensureWord();
+          const plain = plainLetter(ch);
+          if (plain) {
+            const cipher = puzzle.encode[plain];
+            const guess = mappings[cipher] || '';
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'cell ' + (guess ? 'is-guess' : 'is-cipher');
+            if (selected === cipher) button.className += ' is-selected';
+            button.textContent = guess || cipher;
+            button.dataset.cipher = cipher;
+            if (guess) button.dataset.guess = guess;
+            button.setAttribute('aria-pressed', selected === cipher ? 'true' : 'false');
+            button.setAttribute('aria-label', guess
+              ? 'Cipher ' + cipher + ', entered as ' + guess
+              : 'Cipher ' + cipher + ', not yet filled');
+            parent.appendChild(button);
+          } else {
+            const mark = document.createElement('span');
+            mark.className = 'mark';
+            mark.textContent = ch;
+            parent.appendChild(mark);
+          }
+        }
+      }
+
+      function renderKeyboard() {
+        keyboard.replaceChildren();
+        for (let r = 0; r < ROWS.length; r += 1) {
+          const row = document.createElement('div');
+          row.className = 'row';
+          const letters = ROWS[r];
+          for (let i = 0; i < letters.length; i += 1) {
+            const letter = letters[i];
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'key';
+            button.textContent = letter;
+            button.dataset.letter = letter;
+            const owner = cipherForPlain(letter);
+            if (owner) button.classList.add('is-used');
+            if (selected && mappings[selected] === letter) button.classList.add('is-current');
+            button.setAttribute('aria-label', owner
+              ? 'Plain letter ' + letter + ', used for cipher ' + owner
+              : 'Plain letter ' + letter);
+            row.appendChild(button);
+          }
+          if (r === ROWS.length - 1) {
+            const clear = document.createElement('button');
+            clear.type = 'button';
+            clear.className = 'key key-clear';
+            clear.textContent = 'Clear';
+            clear.dataset.action = 'clear';
+            clear.setAttribute('aria-label', 'Clear the selected mapping');
+            row.appendChild(clear);
+          }
+          keyboard.appendChild(row);
+        }
+      }
+
+      function render() {
+        document.body.classList.toggle('is-solved', solved);
+        attemptNum.textContent = String(attempts);
+        attemptLabel.textContent = attemptWord(attempts);
+        todayEl.textContent = formatToday(puzzle.dateKey);
+        byline.replaceChildren();
+        const by = document.createElement('span');
+        by.className = 'by-label';
+        by.textContent = 'By';
+        const name = document.createElement('div');
+        name.className = 'by-name';
+        byline.append(by, name);
+        victoryQuote.textContent = puzzle.text;
+        victoryBy.textContent = puzzle.author;
+        victoryScore.textContent = 'Solved in ' + attempts + ' ' + attemptWord(attempts) + '.';
+        if (solved) {
+          hint.textContent = '';
+          return;
+        }
+        renderCipherText(name, puzzle.author);
+        renderCipherText(board, puzzle.text);
+        renderKeyboard();
+        hint.textContent = hintOverride || (selected
+          ? (mappings[selected]
+            ? 'Cipher ' + selected + ' is ' + mappings[selected] + '. Type to replace it.'
+            : 'Cipher ' + selected + ' selected. Type a letter.')
+          : 'Select a letter, then type its match.');
+        hint.classList.toggle('is-alert', Boolean(hintOverride));
+      }
+
+      function nudge(message) {
+        hintOverride = message;
+        render();
+        window.clearTimeout(hintTimer);
+        hintTimer = window.setTimeout(function () {
+          hintOverride = '';
+          render();
+        }, 1400);
+      }
+
+      function selectCipher(cipher) {
+        if (solved || !cipher) return;
+        selected = cipher;
+        hintOverride = '';
+        persist();
+        render();
+      }
+
+      // One attempt is one edit: assigning, replacing, or clearing the selected
+      // ciphertext letter. Stealing a plaintext letter from another ciphertext
+      // letter is part of that same edit. Repeating the current mapping is free.
+      function assignLetter(plain) {
+        if (solved) return;
+        if (!/^[A-Z]$/.test(plain)) return;
+        if (!selected) {
+          nudge('Select a letter, then type its match.');
+          return;
+        }
+        if (mappings[selected] === plain) return;
+        const next = {};
+        const ciphers = Object.keys(mappings);
+        for (let i = 0; i < ciphers.length; i += 1) {
+          if (mappings[ciphers[i]] !== plain) next[ciphers[i]] = mappings[ciphers[i]];
+        }
+        next[selected] = plain;
+        mappings = next;
+        attempts += 1;
+        if (isSolved()) {
+          solved = true;
+          selected = null;
+        }
+        hintOverride = '';
+        persist();
+        render();
+      }
+
+      function clearSelected() {
+        if (solved) return;
+        if (!selected) {
+          nudge('Select a letter, then type its match.');
+          return;
+        }
+        if (!mappings[selected]) return;
+        const next = {};
+        const ciphers = Object.keys(mappings);
+        for (let i = 0; i < ciphers.length; i += 1) {
+          if (ciphers[i] !== selected) next[ciphers[i]] = mappings[ciphers[i]];
+        }
+        mappings = next;
+        attempts += 1;
+        hintOverride = '';
+        persist();
+        render();
+      }
+
+      function onKeyDown(event) {
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        if (event.key === 'Escape') {
+          if (!selected || solved) return;
+          selected = null;
+          hintOverride = '';
+          persist();
+          render();
+          return;
+        }
+        if (event.key === 'Backspace' || event.key === 'Delete') {
+          event.preventDefault();
+          clearSelected();
+          return;
+        }
+        if (event.key && event.key.length === 1) {
+          const plain = event.key.toUpperCase();
+          if (plain >= 'A' && plain <= 'Z') {
+            event.preventDefault();
+            assignLetter(plain);
+          }
+        }
+      }
+
+      function start(dateKey) {
+        puzzle = buildPuzzle(dateKey);
+        mappings = {};
+        attempts = 0;
+        selected = null;
+        solved = false;
+        hintOverride = '';
+        const saved = readProgress(dateKey);
+        if (saved) {
+          mappings = saved.mappings;
+          attempts = saved.attempts;
+          selected = saved.selected;
+        }
+        if (isSolved()) {
+          solved = true;
+          selected = null;
+        }
+        render();
+      }
+
+      function ensureToday() {
+        const dateKey = localDateKey(new Date());
+        if (!puzzle || puzzle.dateKey !== dateKey) start(dateKey);
+      }
+
+      document.getElementById('play').addEventListener('click', function (event) {
+        const cell = event.target.closest('.cell');
+        if (!cell || !document.getElementById('play').contains(cell)) return;
+        selectCipher(cell.dataset.cipher);
+      });
+
+      keyboard.addEventListener('click', function (event) {
+        const key = event.target.closest('.key');
+        if (!key || !keyboard.contains(key)) return;
+        if (key.dataset.letter) assignLetter(key.dataset.letter);
+        if (key.dataset.action === 'clear') clearSelected();
+      });
+
+      document.addEventListener('keydown', onKeyDown);
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') ensureToday();
+      });
+      window.setInterval(ensureToday, 15000);
+      ensureToday();
+    })();
+  </script>
+</body>
+</html>
