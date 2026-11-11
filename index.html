@@ -53,9 +53,9 @@
 
     .masthead {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 1rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.7rem;
       padding-bottom: 0.8rem;
       border-bottom: 3px solid var(--ink);
       position: relative;
@@ -71,15 +71,6 @@
       background: var(--ink);
     }
 
-    .kicker {
-      margin: 0 0 0.25rem;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--pine);
-    }
-
     .title {
       margin: 0;
       font-family: var(--serif);
@@ -89,52 +80,32 @@
       line-height: 0.85;
     }
 
-    .score { text-align: right; }
-
-    .score-row {
+    .status {
       display: flex;
-      align-items: flex-end;
-      justify-content: flex-end;
-      gap: 0.45rem;
-    }
-
-    .score-num {
-      margin: 0;
-      font-family: var(--serif);
-      font-size: 2.5rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      line-height: 0.85;
-    }
-
-    .score-label {
-      margin: 0.2rem 0 0;
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.35rem 0.55rem;
+      margin: 0.15rem 0 0;
       color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .attempts {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
       white-space: nowrap;
     }
 
-    .goal {
-      margin: 0 0 0.08rem;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      color: var(--ink);
-      white-space: nowrap;
-    }
+    .goal,
+    .today { white-space: nowrap; }
+
+    .dot { color: var(--line); }
 
     .is-under { color: var(--goal-under); }
     .is-even { color: var(--goal-even); }
     .is-over { color: var(--goal-over); }
-
-    .today {
-      margin: 0.4rem 0 0;
-      font-size: 0.82rem;
-      white-space: nowrap;
-    }
 
     main { padding-top: 1.6rem; }
 
@@ -150,16 +121,18 @@
       flex-wrap: wrap;
       justify-content: center;
       align-items: flex-end;
-      gap: 0.35rem 0.45rem;
+      gap: 0.55rem 1.85rem;
       max-width: 100%;
     }
+
+    .by-name > .mark { margin-right: -1.3rem; }
 
     .board {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       align-items: flex-end;
-      gap: 0.72rem 0.8rem;
+      gap: 0.9rem 1.85rem;
     }
 
     .word {
@@ -168,7 +141,7 @@
       justify-content: center;
       align-items: flex-end;
       max-width: 100%;
-      gap: 0.12rem;
+      gap: 0.08rem;
     }
 
     .cell, .key {
@@ -404,18 +377,14 @@
 <body>
   <div class="app">
     <header class="masthead">
-      <div>
-        <p class="kicker">Daily cipher</p>
-        <h1 class="title">Cypher</h1>
-      </div>
-      <div class="score" aria-live="polite" aria-atomic="true">
-        <div class="score-row">
-          <p class="score-num" id="attempt-num">0</p>
-          <p class="goal" id="goal">Goal</p>
-        </div>
-        <p class="score-label" id="attempt-label">attempts</p>
-        <p class="today" id="today"></p>
-      </div>
+      <h1 class="title">Cypher</h1>
+      <p class="status" aria-live="polite">
+        <span class="attempts" id="attempts"><span id="attempt-num">0</span> <span id="attempt-label">attempts</span></span>
+        <span class="dot" aria-hidden="true">·</span>
+        <span class="goal" id="goal">Goal</span>
+        <span class="dot" aria-hidden="true">·</span>
+        <span class="today" id="today"></span>
+      </p>
     </header>
     <main>
       <section class="play" id="play">
@@ -545,7 +514,180 @@
       { text: "'Tis better to have loved and lost than never to have loved at all.", author: 'Alfred Tennyson' },
       { text: 'The child is father of the man.', author: 'William Wordsworth' },
       { text: 'Water, water, every where, nor any drop to drink.', author: 'Samuel Taylor Coleridge' },
-      { text: 'All for one, and one for all.', author: 'Alexandre Dumas' }
+      { text: 'All for one, and one for all.', author: 'Alexandre Dumas' },
+      { text: 'Slow and steady wins the race.', author: 'Aesop' },
+      { text: 'A liar is not believed, even when he speaks the truth.', author: 'Aesop' },
+      { text: 'Please all, and you will please none.', author: 'Aesop' },
+      { text: 'The beginning is the most important part of the work.', author: 'Plato' },
+      { text: 'Well begun is half done.', author: 'Aristotle' },
+      { text: 'Happiness depends upon ourselves.', author: 'Aristotle' },
+      { text: 'Nature does nothing in vain.', author: 'Aristotle' },
+      { text: 'You have power over your mind, not outside events.', author: 'Marcus Aurelius' },
+      { text: 'The best revenge is to be unlike your enemy.', author: 'Marcus Aurelius' },
+      { text: 'Dwell on the beauty of life.', author: 'Marcus Aurelius' },
+      { text: 'The soul is dyed by the color of its thoughts.', author: 'Marcus Aurelius' },
+      { text: 'No great thing is created suddenly.', author: 'Epictetus' },
+      { text: 'Make the best use of what is in your power.', author: 'Epictetus' },
+      { text: 'Wealth consists in having few wants.', author: 'Epictetus' },
+      { text: 'We suffer more often in imagination than in reality.', author: 'Seneca' },
+      { text: 'While we postpone, life speeds by.', author: 'Seneca' },
+      { text: 'As long as you live, keep learning how to live.', author: 'Seneca' },
+      { text: 'While there is life, there is hope.', author: 'Cicero' },
+      { text: 'The life of the dead is set in the memory of the living.', author: 'Cicero' },
+      { text: 'Seize the day.', author: 'Horace' },
+      { text: 'Begin, be bold, and venture to be wise.', author: 'Horace' },
+      { text: 'Dripping water hollows out stone.', author: 'Ovid' },
+      { text: 'There is a time for many words, and a time for sleep.', author: 'Homer' },
+      { text: 'Rather fail with honor than succeed by fraud.', author: 'Sophocles' },
+      { text: 'Talk sense to a fool and he calls you foolish.', author: 'Euripides' },
+      { text: 'Wisdom comes through suffering.', author: 'Aeschylus' },
+      { text: 'Someone, I tell you, will remember us.', author: 'Sappho' },
+      { text: 'Do not do to others what you do not want done to you.', author: 'Confucius' },
+      { text: 'Study the past if you would define the future.', author: 'Confucius' },
+      { text: 'In the midst of chaos, there is also opportunity.', author: 'Sun Tzu' },
+      { text: 'Nature does not hurry, yet everything is accomplished.', author: 'Lao Tzu' },
+      { text: 'Silence is a source of great strength.', author: 'Lao Tzu' },
+      { text: 'Nothing endures but change.', author: 'Heraclitus' },
+      { text: 'Peace comes from within.', author: 'Buddha' },
+      { text: 'Health is the greatest gift.', author: 'Buddha' },
+      { text: 'The moving finger writes, and, having writ, moves on.', author: 'Omar Khayyam' },
+      { text: 'Take the cash, and let the credit go.', author: 'Omar Khayyam' },
+      { text: 'Abandon all hope, ye who enter here.', author: 'Dante Alighieri' },
+      { text: 'The life so short, the craft so long to learn.', author: 'Geoffrey Chaucer' },
+      { text: 'Where the willingness is great, the difficulties are small.', author: 'Niccolo Machiavelli' },
+      { text: 'The surest sign of wisdom is cheerfulness.', author: 'Michel de Montaigne' },
+      { text: 'Diligence is the mother of good fortune.', author: 'Miguel de Cervantes' },
+      { text: 'He who sings frightens away his ills.', author: 'Miguel de Cervantes' },
+      { text: 'A prudent question is one half of wisdom.', author: 'Francis Bacon' },
+      { text: 'No man is an island.', author: 'John Donne' },
+      { text: 'Gather ye rosebuds while ye may.', author: 'Robert Herrick' },
+      { text: 'The mind is its own place.', author: 'John Milton' },
+      { text: 'They also serve who only stand and wait.', author: 'John Milton' },
+      { text: 'Better to reign in hell than serve in heaven.', author: 'John Milton' },
+      { text: 'He that is down needs fear no fall.', author: 'John Bunyan' },
+      { text: 'To err is human; to forgive, divine.', author: 'Alexander Pope' },
+      { text: 'Fools rush in where angels fear to tread.', author: 'Alexander Pope' },
+      { text: 'A little learning is a dangerous thing.', author: 'Alexander Pope' },
+      { text: 'Hope springs eternal.', author: 'Alexander Pope' },
+      { text: 'May you live all the days of your life.', author: 'Jonathan Swift' },
+      { text: 'Great works are performed not by strength, but by perseverance.', author: 'Samuel Johnson' },
+      { text: 'Language is the dress of thought.', author: 'Samuel Johnson' },
+      { text: 'O my love is like a red, red rose.', author: 'Robert Burns' },
+      { text: 'A man\'s a man for all that.', author: 'Robert Burns' },
+      { text: 'The road of excess leads to the palace of wisdom.', author: 'William Blake' },
+      { text: 'No bird soars too high if he soars with his own wings.', author: 'William Blake' },
+      { text: 'She walks in beauty, like the night.', author: 'Lord Byron' },
+      { text: 'If winter comes, can spring be far behind?', author: 'Percy Bysshe Shelley' },
+      { text: 'I am no bird, and no net ensnares me.', author: 'Charlotte Bronte' },
+      { text: 'Honest people do not hide their deeds.', author: 'Emily Bronte' },
+      { text: 'It was the best of times, it was the worst of times.', author: 'Charles Dickens' },
+      { text: 'The pain of parting is nothing to the joy of meeting again.', author: 'Charles Dickens' },
+      { text: 'The sudden disappointment of a hope leaves a scar.', author: 'Thomas Hardy' },
+      { text: 'We underrate the duty of being happy.', author: 'Robert Louis Stevenson' },
+      { text: 'Who in the world am I? Ah, that\'s the great puzzle.', author: 'Lewis Carroll' },
+      { text: 'I am not afraid of storms, for I am learning to sail my ship.', author: 'Louisa May Alcott' },
+      { text: 'Once you learn to read, you will be forever free.', author: 'Frederick Douglass' },
+      { text: 'Truth is powerful, and it prevails.', author: 'Sojourner Truth' },
+      { text: 'If you want to lift yourself up, lift up someone else.', author: 'Booker T. Washington' },
+      { text: 'Turn the light of truth upon wrongs.', author: 'Ida B. Wells' },
+      { text: 'Education must teach life, not only work.', author: 'W. E. B. Du Bois' },
+      { text: 'Resist much, obey little.', author: 'Walt Whitman' },
+      { text: 'That it will never come again makes life so sweet.', author: 'Emily Dickinson' },
+      { text: 'I became insane, with long intervals of horrible sanity.', author: 'Edgar Allan Poe' },
+      { text: 'Into each life some rain must fall.', author: 'Henry Wadsworth Longfellow' },
+      { text: 'For every minute you are angry you lose sixty seconds of happiness.', author: 'Ralph Waldo Emerson' },
+      { text: 'Go confidently in the direction of your dreams.', author: 'Henry David Thoreau' },
+      { text: 'Our life is frittered away by detail.', author: 'Henry David Thoreau' },
+      { text: 'Time flies over us, but leaves its shadow behind.', author: 'Nathaniel Hawthorne' },
+      { text: 'Better to fail in originality than to succeed in imitation.', author: 'Herman Melville' },
+      { text: 'A kind heart is a fountain of gladness.', author: 'Washington Irving' },
+      { text: 'An investment in knowledge pays the best interest.', author: 'Benjamin Franklin' },
+      { text: 'Energy and persistence conquer all things.', author: 'Benjamin Franklin' },
+      { text: 'The world is my country, all mankind are my brethren.', author: 'Thomas Paine' },
+      { text: 'Do you want to know who you are? Don\'t ask. Act.', author: 'Thomas Jefferson' },
+      { text: 'It is better to offer no excuse than a bad one.', author: 'George Washington' },
+      { text: 'Facts are stubborn things.', author: 'John Adams' },
+      { text: 'Learning is not attained by chance.', author: 'Abigail Adams' },
+      { text: 'Truth is the only safe ground to stand upon.', author: 'Elizabeth Cady Stanton' },
+      { text: 'Common sense is not so common.', author: 'Voltaire' },
+      { text: 'Doubt is unpleasant, but certainty is absurd.', author: 'Voltaire' },
+      { text: 'Patience is bitter, but its fruit is sweet.', author: 'Jean-Jacques Rousseau' },
+      { text: 'The heart has its reasons, which reason does not know.', author: 'Blaise Pascal' },
+      { text: 'We promise according to our hopes and perform according to our fears.', author: 'La Rochefoucauld' },
+      { text: 'Patience and time do more than strength or passion.', author: 'Jean de La Fontaine' },
+      { text: 'I prefer an easy vice to a fatiguing virtue.', author: 'Moliere' },
+      { text: 'Even the darkest night will end and the sun will rise.', author: 'Victor Hugo' },
+      { text: 'To love another person is to see the face of God.', author: 'Victor Hugo' },
+      { text: 'All human wisdom is in these two words: wait and hope.', author: 'Alexandre Dumas' },
+      { text: 'There is only one happiness in life: to love and be loved.', author: 'George Sand' },
+      { text: 'Anything one man can imagine, other men can make real.', author: 'Jules Verne' },
+      { text: 'If you want to be happy, be.', author: 'Leo Tolstoy' },
+      { text: 'Patience and time are the two most powerful warriors.', author: 'Leo Tolstoy' },
+      { text: 'All happy families are alike.', author: 'Leo Tolstoy' },
+      { text: 'Beauty will save the world.', author: 'Fyodor Dostoevsky' },
+      { text: 'Above all, do not lie to yourself.', author: 'Fyodor Dostoevsky' },
+      { text: 'Knowledge is of no value unless you put it into practice.', author: 'Anton Chekhov' },
+      { text: 'Do not blame the mirror if your face is awry.', author: 'Nikolai Gogol' },
+      { text: 'A man sees in the world what he carries in his heart.', author: 'Johann Wolfgang von Goethe' },
+      { text: 'Knowing is not enough; we must apply.', author: 'Johann Wolfgang von Goethe' },
+      { text: 'Dare to know.', author: 'Immanuel Kant' },
+      { text: 'Science is organized knowledge. Wisdom is organized life.', author: 'Immanuel Kant' },
+      { text: 'Compassion is the basis of morality.', author: 'Arthur Schopenhauer' },
+      { text: 'All things excellent are as difficult as they are rare.', author: 'Baruch Spinoza' },
+      { text: 'Leisure is the mother of philosophy.', author: 'Thomas Hobbes' },
+      { text: 'And yet it moves.', author: 'Galileo Galilei' },
+      { text: 'Learning never exhausts the mind.', author: 'Leonardo da Vinci' },
+      { text: 'Was this the face that launched a thousand ships?', author: 'Christopher Marlowe' },
+      { text: 'Living well is the best revenge.', author: 'George Herbert' },
+      { text: 'Had we but world enough, and time.', author: 'Andrew Marvell' },
+      { text: 'Variety is the very spice of life.', author: 'William Cowper' },
+      { text: 'Where ignorance is bliss, \'tis folly to be wise.', author: 'Thomas Gray' },
+      { text: 'The old order changeth, yielding place to new.', author: 'Alfred Tennyson' },
+      { text: 'A man\'s reach should exceed his grasp.', author: 'Robert Browning' },
+      { text: 'How do I love thee? Let me count the ways.', author: 'Elizabeth Barrett Browning' },
+      { text: 'My heart is like a singing bird.', author: 'Christina Rossetti' },
+      { text: 'Where words fail, music speaks.', author: 'Hans Christian Andersen' },
+      { text: 'Life itself is the most wonderful fairy tale.', author: 'Hans Christian Andersen' },
+      { text: 'Love and scandal are the best sweeteners of tea.', author: 'Henry Fielding' },
+      { text: 'The Owl and the Pussycat went to sea.', author: 'Edward Lear' },
+      { text: 'There is no place like home.', author: 'L. Frank Baum' },
+      { text: 'To die will be an awfully big adventure.', author: 'J. M. Barrie' },
+      { text: 'Nothing is more deceptive than an obvious fact.', author: 'Arthur Conan Doyle' },
+      { text: 'Listen to them, the children of the night.', author: 'Bram Stoker' },
+      { text: 'I cannot rest, I must draw.', author: 'Beatrix Potter' },
+      { text: 'Tomorrow is fresh, with no mistakes in it.', author: 'Lucy Maud Montgomery' },
+      { text: 'Spring was moving in the air above and in the earth below.', author: 'Kenneth Grahame' },
+      { text: 'People say nothing is impossible, but I do nothing every day.', author: 'A. A. Milne' },
+      { text: 'He travels the fastest who travels alone.', author: 'Rudyard Kipling' },
+      { text: 'Tread softly because you tread on my dreams.', author: 'W. B. Yeats' },
+      { text: 'Faith is the bird that feels the light and sings while it is still dark.', author: 'Rabindranath Tagore' },
+      { text: 'Work is love made visible.', author: 'Kahlil Gibran' },
+      { text: 'Beauty is eternity gazing at itself in a mirror.', author: 'Kahlil Gibran' },
+      { text: 'Patience is the companion of wisdom.', author: 'Augustine of Hippo' },
+      { text: 'The things that we love tell us what we are.', author: 'Thomas Aquinas' },
+      { text: 'Patience obtains all things.', author: 'Teresa of Avila' },
+      { text: 'All shall be well, and all shall be well.', author: 'Julian of Norwich' },
+      { text: 'The mind is not a vessel to be filled, but a fire to be kindled.', author: 'Plutarch' },
+      { text: 'Victory belongs to the most persevering.', author: 'Napoleon Bonaparte' },
+      { text: 'Alone we can do so little; together we can do so much.', author: 'Helen Keller' },
+      { text: 'Always forgive your enemies; nothing annoys them so much.', author: 'Oscar Wilde' },
+      { text: 'Come forth into the light of things.', author: 'William Wordsworth' },
+      { text: 'A drop of ink may make a million think.', author: 'Lord Byron' },
+      { text: 'I would always rather be happy than dignified.', author: 'Charlotte Bronte' },
+      { text: 'Whatever our souls are made of, his and mine are the same.', author: 'Emily Bronte' },
+      { text: 'Act well your part; there all the honor lies.', author: 'Alexander Pope' },
+      { text: 'Sleep after toil, port after stormy seas.', author: 'Edmund Spenser' },
+      { text: 'In the country of the blind, the one-eyed man is king.', author: 'Erasmus' },
+      { text: 'Appetite comes with eating.', author: 'Francois Rabelais' },
+      { text: 'First keep peace within yourself.', author: 'Thomas a Kempis' },
+      { text: 'The world is a book, and those who do not travel read only a page.', author: 'Augustine of Hippo' },
+      { text: 'Measure what is measurable.', author: 'Galileo Galilei' },
+      { text: 'Poor is the pupil who does not surpass his master.', author: 'Leonardo da Vinci' },
+      { text: 'Words are the most powerful drug used by mankind.', author: 'Rudyard Kipling' },
+      { text: 'He who sings scares away his woes.', author: 'Miguel de Cervantes' },
+      { text: 'Some books are to be tasted, others swallowed.', author: 'Francis Bacon' },
+      { text: 'Iron rusts from disuse.', author: 'Leonardo da Vinci' },
+      { text: 'A gem cannot be polished without friction, nor a man perfected without trials.', author: 'Seneca' },
     ];
 
     function hashString(str) {
@@ -655,6 +797,7 @@
 
     (function () {
       const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+      const attemptPhrase = document.getElementById('attempts');
       const attemptNum = document.getElementById('attempt-num');
       const attemptLabel = document.getElementById('attempt-label');
       const goalEl = document.getElementById('goal');
@@ -676,7 +819,7 @@
       let hintTimer = 0;
 
       function storageKey(dateKey) {
-        return 'cypher.v3.' + dateKey;
+        return 'cypher.v4.' + dateKey;
       }
 
       function plainLetter(ch) {
@@ -881,7 +1024,7 @@
         const mark = goalMark(attempts, goal);
         attemptNum.textContent = String(attempts);
         attemptLabel.textContent = attemptWord(attempts);
-        paintGoal(attemptNum, mark);
+        paintGoal(attemptPhrase, mark);
         goalEl.textContent = 'Goal ' + goal;
         todayEl.textContent = formatToday(puzzle.dateKey);
         victoryQuote.textContent = puzzle.text;
