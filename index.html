@@ -19,6 +19,9 @@
       --pine: #146b54;
       --pine-deep: #0d4a3b;
       --butter: #ffd56a;
+      --goal-under: var(--pine);
+      --goal-even: #8d6b14;
+      --goal-over: #a34132;
       --card: #fffdf9;
       --dock: #ebe3d4;
       --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Noto Serif Display", "Liberation Serif", Georgia, "Times New Roman", serif;
@@ -114,14 +117,18 @@
       white-space: nowrap;
     }
 
-    .par {
+    .goal {
       margin: 0 0 0.08rem;
       font-size: 0.78rem;
       font-weight: 700;
       letter-spacing: 0.04em;
-      color: var(--pine);
+      color: var(--ink);
       white-space: nowrap;
     }
+
+    .is-under { color: var(--goal-under); }
+    .is-even { color: var(--goal-even); }
+    .is-over { color: var(--goal-over); }
 
     .today {
       margin: 0.4rem 0 0;
@@ -393,7 +400,7 @@
       <div class="score" aria-live="polite" aria-atomic="true">
         <div class="score-row">
           <p class="score-num" id="attempt-num">0</p>
-          <p class="par" id="par">Par</p>
+          <p class="goal" id="goal">Goal</p>
         </div>
         <p class="score-label" id="attempt-label">attempts</p>
         <p class="today" id="today"></p>
@@ -599,7 +606,7 @@
       const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
       const attemptNum = document.getElementById('attempt-num');
       const attemptLabel = document.getElementById('attempt-label');
-      const parEl = document.getElementById('par');
+      const goalEl = document.getElementById('goal');
       const todayEl = document.getElementById('today');
       const byline = document.getElementById('byline');
       const board = document.getElementById('board');
@@ -645,12 +652,23 @@
         return count === 1 ? 'attempt' : 'attempts';
       }
 
-      function puzzlePar() {
+      function puzzleGoal() {
         const letters = new Set();
         function add(plain) { letters.add(plain); }
         forEachPlain(puzzle.text, add);
         forEachPlain(puzzle.author, add);
         return letters.size;
+      }
+
+      function goalMark(count, goal) {
+        if (count < goal) return 'is-under';
+        if (count > goal) return 'is-over';
+        return 'is-even';
+      }
+
+      function paintGoal(el, mark) {
+        el.classList.remove('is-under', 'is-even', 'is-over');
+        el.classList.add(mark);
       }
 
       function cipherLettersInPuzzle() {
@@ -820,14 +838,17 @@
 
       function render() {
         document.body.classList.toggle('is-solved', solved);
-        const par = puzzlePar();
+        const goal = puzzleGoal();
+        const mark = goalMark(attempts, goal);
         attemptNum.textContent = String(attempts);
         attemptLabel.textContent = attemptWord(attempts);
-        parEl.textContent = 'Par ' + par;
+        paintGoal(attemptNum, mark);
+        goalEl.textContent = 'Goal ' + goal;
         todayEl.textContent = formatToday(puzzle.dateKey);
         victoryQuote.textContent = puzzle.text;
         victoryBy.textContent = '\u2014 ' + puzzle.author;
-        victoryScore.textContent = 'Solved in ' + attempts + ' ' + attemptWord(attempts) + '. Par ' + par + '.';
+        victoryScore.textContent = 'Solved in ' + attempts + ' ' + attemptWord(attempts) + '. Goal ' + goal + '.';
+        paintGoal(victoryScore, mark);
         if (solved) {
           hint.textContent = '';
           return;
