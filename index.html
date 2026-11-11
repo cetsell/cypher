@@ -88,6 +88,13 @@
 
     .score { text-align: right; }
 
+    .score-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      gap: 0.45rem;
+    }
+
     .score-num {
       margin: 0;
       font-family: var(--serif);
@@ -104,6 +111,15 @@
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .par {
+      margin: 0 0 0.08rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--pine);
       white-space: nowrap;
     }
 
@@ -375,7 +391,10 @@
         <h1 class="title">Cypher</h1>
       </div>
       <div class="score" aria-live="polite" aria-atomic="true">
-        <p class="score-num" id="attempt-num">0</p>
+        <div class="score-row">
+          <p class="score-num" id="attempt-num">0</p>
+          <p class="par" id="par">Par</p>
+        </div>
         <p class="score-label" id="attempt-label">attempts</p>
         <p class="today" id="today"></p>
       </div>
@@ -580,6 +599,7 @@
       const ROWS = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
       const attemptNum = document.getElementById('attempt-num');
       const attemptLabel = document.getElementById('attempt-label');
+      const parEl = document.getElementById('par');
       const todayEl = document.getElementById('today');
       const byline = document.getElementById('byline');
       const board = document.getElementById('board');
@@ -623,6 +643,14 @@
 
       function attemptWord(count) {
         return count === 1 ? 'attempt' : 'attempts';
+      }
+
+      function puzzlePar() {
+        const letters = new Set();
+        function add(plain) { letters.add(plain); }
+        forEachPlain(puzzle.text, add);
+        forEachPlain(puzzle.author, add);
+        return letters.size;
       }
 
       function cipherLettersInPuzzle() {
@@ -792,12 +820,14 @@
 
       function render() {
         document.body.classList.toggle('is-solved', solved);
+        const par = puzzlePar();
         attemptNum.textContent = String(attempts);
         attemptLabel.textContent = attemptWord(attempts);
+        parEl.textContent = 'Par ' + par;
         todayEl.textContent = formatToday(puzzle.dateKey);
         victoryQuote.textContent = puzzle.text;
         victoryBy.textContent = '\u2014 ' + puzzle.author;
-        victoryScore.textContent = 'Solved in ' + attempts + ' ' + attemptWord(attempts) + '.';
+        victoryScore.textContent = 'Solved in ' + attempts + ' ' + attemptWord(attempts) + '. Par ' + par + '.';
         if (solved) {
           hint.textContent = '';
           return;
