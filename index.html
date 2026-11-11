@@ -117,29 +117,17 @@
 
     .byline {
       display: flex;
-      flex-wrap: wrap;
       justify-content: center;
-      align-items: flex-end;
-      gap: 0.45rem 0.55rem;
-      margin: 0 0 1.2rem;
-    }
-
-    .by-label {
-      align-self: center;
-      font-family: var(--sans);
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--muted);
+      width: 100%;
+      margin: 0.85rem 0 0;
     }
 
     .by-name {
-      display: inline-flex;
+      display: flex;
       flex-wrap: wrap;
       justify-content: center;
       align-items: flex-end;
-      gap: 0.4rem 0.45rem;
+      gap: 0.35rem 0.45rem;
       max-width: 100%;
     }
 
@@ -247,8 +235,6 @@
       font-style: italic;
       font-size: 1.15rem;
     }
-
-    .victory-by::before { content: "\2014\00a0"; }
 
     .victory-score {
       margin: 0.9rem 0 0.3rem;
@@ -396,9 +382,9 @@
     </header>
     <main>
       <section class="play" id="play">
-        <div class="byline" id="byline" translate="no" aria-label="Attribution"></div>
         <h2 class="sr-only">Today's quote</h2>
         <div class="board" id="board" role="group" aria-label="Cipher puzzle" translate="no"></div>
+        <div class="byline" id="byline" translate="no" aria-label="Source"></div>
       </section>
       <section class="victory" id="victory">
         <p class="eyebrow">Solved</p>
@@ -612,7 +598,7 @@
       let hintTimer = 0;
 
       function storageKey(dateKey) {
-        return 'cypher.v2.' + dateKey;
+        return 'cypher.v3.' + dateKey;
       }
 
       function plainLetter(ch) {
@@ -809,26 +795,27 @@
         attemptNum.textContent = String(attempts);
         attemptLabel.textContent = attemptWord(attempts);
         todayEl.textContent = formatToday(puzzle.dateKey);
-        byline.replaceChildren();
-        const by = document.createElement('span');
-        by.className = 'by-label';
-        by.textContent = 'By';
-        const name = document.createElement('div');
-        name.className = 'by-name';
-        byline.append(by, name);
         victoryQuote.textContent = puzzle.text;
-        victoryBy.textContent = puzzle.author;
+        victoryBy.textContent = '\u2014 ' + puzzle.author;
         victoryScore.textContent = 'Solved in ' + attempts + ' ' + attemptWord(attempts) + '.';
         if (solved) {
           hint.textContent = '';
           return;
         }
+        byline.replaceChildren();
+        const name = document.createElement('div');
+        name.className = 'by-name';
+        byline.append(name);
         renderCipherText(name, puzzle.author);
+        const dash = document.createElement('span');
+        dash.className = 'mark';
+        dash.textContent = '\u2014';
+        name.insertBefore(dash, name.firstChild);
         renderCipherText(board, puzzle.text);
         renderKeyboard();
         hint.textContent = hintOverride || (selected
           ? (mappings[selected]
-            ? 'Cipher ' + selected + ' is ' + mappings[selected] + '. Type to replace it.'
+            ? 'Cipher ' + selected + ' is ' + mappings[selected] + '. Type a letter to exchange it.'
             : 'Cipher ' + selected + ' selected. Type a letter.')
           : 'Select a letter, then type its match.');
         hint.classList.toggle('is-alert', Boolean(hintOverride));
@@ -852,23 +839,33 @@
         render();
       }
 
-      // One attempt is one edit: assigning, replacing, or clearing the selected
-      // ciphertext letter. Stealing a plaintext letter from another ciphertext
-      // letter is part of that same edit. Repeating the current mapping is free.
-      function assignLetter(plain) {
+      function shownLetter(cipher) {
+        return mappings[cipher] || cipher;
+      }
+
+      // One attempt is one edit. The typed letter exchanges with the letter
+      // on the selected cells: every selected letter becomes the typed letter,
+      // and if that letter is already in the puzzle (a ciphertext letter or a
+      // letter already placed), those instances become the letter that was
+      // selected. Repeating the current letter is free.
+      function assignLetter(typed) {
         if (solved) return;
-        if (!/^[A-Z]$/.test(plain)) return;
+        if (!/^[A-Z]$/.test(typed)) return;
         if (!selected) {
           nudge('Select a letter, then type its match.');
           return;
         }
-        if (mappings[selected] === plain) return;
+        const previous = shownLetter(selected);
+        if (previous === typed) return;
+        const present = cipherLettersInPuzzle();
         const next = {};
-        const ciphers = Object.keys(mappings);
-        for (let i = 0; i < ciphers.length; i += 1) {
-          if (mappings[ciphers[i]] !== plain) next[ciphers[i]] = mappings[ciphers[i]];
-        }
-        next[selected] = plain;
+        present.forEach(function (cipher) {
+          const shown = shownLetter(cipher);
+          let display = shown;
+          if (cipher === selected) display = typed;
+          else if (shown === typed) display = previous;
+          if (display !== cipher) next[cipher] = display;
+        });
         mappings = next;
         attempts += 1;
         if (isSolved()) {
@@ -887,16 +884,7 @@
           return;
         }
         if (!mappings[selected]) return;
-        const next = {};
-        const ciphers = Object.keys(mappings);
-        for (let i = 0; i < ciphers.length; i += 1) {
-          if (ciphers[i] !== selected) next[ciphers[i]] = mappings[ciphers[i]];
-        }
-        mappings = next;
-        attempts += 1;
-        hintOverride = '';
-        persist();
-        render();
+        assignLetter(selected);
       }
 
       function onKeyDown(event) {
